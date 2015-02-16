@@ -1,13 +1,10 @@
 ---
-title: API Reference
+title: Moneypool API Documentaion
 
 language_tabs:
   - shell
-  - ruby
-  - python
 
 toc_footers:
-  - <a href='#'>Sign Up for a Developer Key</a>
   - <a href='http://github.com/tripit/slate'>Documentation Powered by Slate</a>
 
 includes:
@@ -18,151 +15,535 @@ search: true
 
 # Introduction
 
-Welcome to the Kittn API! You can use our API to access Kittn API endpoints, which can get information on various cats, kittens, and breeds in our database.
-
-We have language bindings in Shell, Ruby, and Python! You can view code examples in the dark area to the right, and you can switch the programming language of the examples with the tabs in the top right.
-
-This example API documentation page was created with [Slate](http://github.com/tripit/slate). Feel free to edit it and use it as a base for your own API's documentation.
+Moneypool API
 
 # Authentication
 
-> To authorize, use this code:
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-```
+> To authorize a user before each action, use the Authorization header in the following format:
 
 ```shell
-# With shell, you can just pass the correct header with each request
-curl "api_endpoint_here"
-  -H "Authorization: meowmeowmeow"
+curl "https://moneypool.mx/api/"
+  -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
 ```
 
-> Make sure to replace `meowmeowmeow` with your API key.
+Every call to the Moneypool api requires an authorization token that identifies a logged in user. 
 
-Kittn uses API keys to allow access to the API. You can register a new Kittn API key at our [developer portal](http://example.com/developers).
+In the Login section of this documentation is the information on how to login a user and receive it's authorization token.
 
-Kittn expects for the API key to be included in all API requests to the server in a header that looks like the following:
-
-`Authorization: meowmeowmeow`
-
-<aside class="notice">
-You must replace `meowmeowmeow` with your personal API key.
-</aside>
-
-# Kittens
-
-## Get All Kittens
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get()
-```
+# Versions
 
 ```shell
-curl "http://example.com/api/kittens"
-  -H "Authorization: meowmeowmeow"
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+      https://moneypool.mx/api/
 ```
 
-> The above command returns JSON structured like this:
+The current api version is version number 1. This needs to be specified in the Accept header.
+
+# Sessions
+
+## Email/Password Login
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -X POST -d '{
+      "user": {
+        "email":"user@example.com",
+        "password":"foobar123"
+        }
+      }' https://moneypool.mx/api/sessions
+```
+> After login a JSON structured like this is returned:
 
 ```json
-[
-  {
-    "id": 1,
-    "name": "Fluffums",
-    "breed": "calico",
-    "fluffiness": 6,
-    "cuteness": 7
-  },
-  {
-    "id": 2,
-    "name": "Isis",
-    "breed": "unknown",
-    "fluffiness": 5,
-    "cuteness": 10
-  }
-]
+{"user":
+  {"id":1, 
+  "name":"John Doe", 
+  "email":"user@example.com", 
+  "avatar_url":"https://example.com/user_avatar.jpg", 
+  "auth_token":"05d07190a444cb8d2bd42af26efcf22b", 
+  "bank":"Bank of Mexico",
+  "clabe":"123456789123456789",
+  "wallet":"1000.0"}
+}
 ```
-
-This endpoint retrieves all kittens.
+This endpoint allows a registered user to login with his moneypool credentials.
 
 ### HTTP Request
 
-`GET http://example.com/kittens`
+`POST https://moneypool.mx/api/sessions`
 
 ### Query Parameters
 
-Parameter | Default | Description
---------- | ------- | -----------
-include_cats | false | If set to true, the result will also include cats.
-available | true | If set to false, the result will include kittens that have already been adopted.
+Parameter | Description
+--------- | -----------
+email | User's email
+password | User's password
 
-<aside class="success">
-Remember — a happy kitten is an authenticated kitten!
+<aside class="notice">
+The `auth_token` returned in the response json is the token that need to be sent in the Authorization header of every call.
 </aside>
 
-## Get a Specific Kitten
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get(2)
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get(2)
-```
+## Facebook Login
 
 ```shell
-curl "http://example.com/api/kittens/3"
-  -H "Authorization: meowmeowmeow"
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -X POST -d '{
+      "user": {
+        "oauth_token":"FACEBOOK_OAUTH_TOKEN"
+        }
+      }' https://moneypool.mx/api/fb_sessions
 ```
-
-> The above command returns JSON structured like this:
+> After login a JSON structured like this is returned:
 
 ```json
-{
-  "id": 2,
-  "name": "Isis",
-  "breed": "unknown",
-  "fluffiness": 5,
-  "cuteness": 10
+{"user":
+  {"id":1, 
+  "name":"John Doe", 
+  "email":"user@example.com", 
+  "avatar_url": "https://example.com/user_avatar.jpg", 
+  "auth_token":"05d07190a444cb8d2bd42af26efcf22b", 
+  "bank":"Bank of Mexico",
+  "clabe":"123456789123456789",
+  "wallet":"1000.0"}
 }
 ```
-
-This endpoint retrieves a specific kitten.
-
-<aside class="warning">If you're not using an administrator API key, note that some kittens will return 403 Forbidden if they are hidden for admins only.</aside>
+This endpoint allows a user to login with facebook authorization.
 
 ### HTTP Request
 
-`GET http://example.com/kittens/<ID>`
+`POST https://moneypool.mx/api/fb_sessions`
 
-### URL Parameters
+### Query Parameters
 
 Parameter | Description
 --------- | -----------
-ID | The ID of the cat to retrieve
+oauth_token | Authorization Token returned by Facebook SDK after useing its login button.
+
+<aside class="notice">
+An existing user will login with this method. A new user can use this method to create an account with a single click.
+</aside>
+
+## Logout
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token='fe70b88622cdc3972513e4d1f10c0b7e'" \
+     -X DELETE
+     https://moneypool.mx/api/sessions
+```
+
+This endpoint allows an authorized user to logout.
+
+### HTTP Request
+
+`DELETE https://moneypool.mx/api/sessions`
+
+# Users
+
+## Create a User
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -X POST -d '{
+      "user": {
+        "name":"John Doe",
+        "email":"john@example.com",
+        "password":"foobar123",
+        "password_confirmation":"foobar123",
+        }
+      }' https://moneypool.mx/api/users
+```
+> After creating a user a JSON structured like this is returned:
+
+```json
+{"user":
+  {"id":1, 
+  "name":"John Doe", 
+  "email":"user@example.com", 
+  "avatar_url": "", 
+  "auth_token":"05d07190a444cb8d2bd42af26efcf22b", 
+  "bank":"",
+  "clabe":"",
+  "wallet":"0.0"}
+}
+```
+This endpoint allows a user to create a moneypool account using his email and personal information.
+
+### HTTP Request
+
+`POST https://moneypool.mx/api/fb_sessions`
+
+### Query Parameters
+
+Parameter |
+--------- |
+name |
+email |
+password |
+password_confirmation |
+
+<aside class="notice">
+  All parameters are required.
+</aside>
+
+## Get a User
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token='fe70b88622cdc3972513e4d1f10c0b7e'" \
+     -X GET
+     https://moneypool.mx/api/users/1
+```
+> Response:
+
+```json
+{"user":
+  {"id":1, 
+  "name":"John Doe", 
+  "email":"user@example.com", 
+  "avatar_url": "https://example.com/user_avatar.jpg", 
+  "auth_token":"05d07190a444cb8d2bd42af26efcf22b", 
+  "bank":"Bank of Mexico",
+  "clabe":"123456789123456789",
+  "wallet":"1000.0"}
+}
+```
+This endpoint retrieves a specific user's information.
+
+### HTTP Request
+
+`GET https://moneypool.mx/api/users/:user_id`
+
+<aside class="notice">
+  A user can only get his own information. The Authorization token sent in the request's headers is used to determine if a user's information can be retrieved or not.
+</aside>
+
+## Update a User
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token='fe70b88622cdc3972513e4d1f10c0b7e'" \
+     -X PATCH -d '{
+      "user": {
+        "name":"John Doe",
+        "email":"john@example.com",
+        "password":"foobar123",
+        "password_confirmation":"foobar123",
+        "avatar":<image file>,
+        "clabe":"123456789123456789",
+        "bank":"Bank of Mexico"
+        }
+      }' https://moneypool.mx/api/users/1
+```
+> After updating a user a JSON structured like this is returned:
+
+```json
+{"user":
+  {"id":1, 
+  "name":"John Doe", 
+  "email":"user@example.com", 
+  "avatar_url": "https://example.com/user_avatar.jpg", 
+  "auth_token":"05d07190a444cb8d2bd42af26efcf22b", 
+  "bank":"Bank of Mexico",
+  "clabe":"123456789123456789",
+  "wallet":"0.0"}
+}
+```
+This endpoint updates a user's information.
+
+### HTTP Request
+
+`PATCH https://moneypool.mx/api/users/:user_id`
+
+### Query Parameters
+
+These are the parameters that can be updated with this endpoint. 
+
+Parameter | Validations | Description
+--------- | ----------- | ------------
+name | Can't be blank |
+email | Can't be blank. Must be a valid email address format. |
+password | Must be at least 6 digits long. |
+password_confirmation | It must match the password parameter. |
+avatar | |
+clabe | | User's bank account **clabe** number, 18 digit long |
+bank | | The name of the user's bank 
+
+<aside class="notice">
+ Parameters not sent on the request won't be updated. 
+</aside>
+
+
+## Reset Password
+
+#Payment Requests
+
+## Payment Request Object
+
+> Example Object
+
+```json
+{
+  "id": 1,
+  "created_at": "2014-11-13T23:54:15.105-06:00",
+  "amount": "108.5",
+  "description": "Pizza and Sodas",
+  "party": "Andy Peterson",
+  "party_email": "andy@mail.com",
+  "type": "to_user",
+  "rejected": false
+}
+```
+
+Payment request objects are used to let a friend know that money is owed to the friend that sent the request. As an authorized user, payment requests of type `from_user` mean that the authorized user owes money to another user (**party**). `to_user` payment requests mean that the authorized user sent a payment request to another user and wants to rceived a payment for it.
+
+When listing Payment Requests, pool invitations are included as well (`pool` type).
+### Attributes
+
+Name | Type | Description
+---- | ---- | -----------
+type | string | `pool` , `from_user`, `to_user`
+id | integer | Id of payment request or pool
+created_at | date |Date of object creation
+party | string | Depending on the type of payment request, this may be the **name** of another moneypool user that the payment request was sent to (`to_user` type) or was received from (`from_user` type). It can also contain the **title** of the pool the user has been invited to and has not payed yet (`pool` type).
+party_email | string | The email of the user to which the payment was sent to or received from. `pool` type payment requests will not have a party_email
+amount | string | Depending on the `type`, amount of MXN pesos as a decimal string that the authorized user owes to the party user or that the party user owes to the authorized user. When type is `pool`, this represents the minimum amount the authorized user has to pay to the pool he's been invited to.
+rejected | boolean | This shows if a payment request has been rejected by the user it was sent to. Only for `to_user`.
+liability_id | integer | The id of a pool invitation. Only for `pool`.
+
+## List Payment Requests
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
+     -X GET
+     https://moneypool.mx/api/users/1/mixed_payment_requests
+```
+> A JSON with a list of payment requests is returned:
+
+```json
+{
+  "payment_requests": [
+      {
+          "id": 20,
+          "created_at": "2015-02-15T18:36:40.437-06:00",
+          "type": "pool",
+          "party": "John's Birthday",
+          "amount": "200.0",
+          "liability_id": 81
+      },
+      {
+          "id": 3,
+          "created_at": "2014-11-13T23:54:15.105-06:00",
+          "amount": "140.0",
+          "description": "Pizza and Sodas",
+          "party": "Andy Peterson",
+          "party_email": "andy@mail.com",
+          "type": "to_user",
+          "rejected": false
+      },
+      {
+          "id": 1,
+          "created_at": "2014-09-11T15:32:57.094-05:00",
+          "amount": "50.0",
+          "description": "Bus fare",
+          "party": "Ashlee Roberts",
+          "party_email": "Ashly@mail.com",
+          "type": "from_user",
+          "rejected": false
+      }
+  ]
+}
+```
+This enpoint gets all of the user's payment requests: payement requests he **received**, payment requests he **sent** and **pools** that he has been invited to and has not payed yet.
+
+### HTTP Request
+
+`GET https://moneypool.mx/api/users/:user_id/mixed_payment_requests`
+
+## Create a Payment Request
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
+     -X POST -d '{
+      "amount":150.0,
+      "description":"Yesterdays dinner",
+      "user_requested_id":2
+      }' https://moneypool.mx/api/users/:user_id/payment_requests
+```
+> After creating a payment request a JSON structured like this is returned:
+
+```json
+{
+  "payment_request": {
+    "id": 8,
+    "description": "Yesterday's dinner",
+    "amount": "140.0",
+    "rejected": false,
+    "user_requested": {
+        "id": 2,
+        "name": "Andy Peterson",
+        "email": "andy@mail.com",
+        "avatar_url": "https://example.com/user_avatar.jpg"
+    }
+  }
+}
+```
+This endpoint allows an authorized user to send a payment_request to another existing moneypool user.
+
+### HTTP Request
+
+`POST https://moneypool.mx/api/users/:user_id/payment_requests`
+
+<aside class="notice">
+  All parameters are required.
+</aside>
+
+<aside class="notice">
+  The user the payment request is being sent to (`user_requested_id`) has to be an existing moneypool user.
+</aside>
+
+## Reject a Payment Request
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
+     -X PATCH
+     https://moneypool.mx/api/users/1/payment_requests/1/reject
+```
+
+This endpoint allows an authorized user to reject a payment_request that he has received from another user.
+
+### HTTP Request
+
+`PATCH https://moneypool.mx/api/users/:user_id/payment_requests/:payment_request_id/reject`
+
+<aside class="notice">
+  Only payment requests the authorized user has received, the ones of the type `from_user`, can be rejected.
+</aside>
+
+## Delete a Payment Request
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
+     -X DELETE
+     https://moneypool.mx/api/users/1/payment_requests/1
+```
+
+This endpoint allows an authorized user to reject a payment_request that he has sent to another user.
+
+### HTTP Request
+
+`DELETE https://moneypool.mx/api/users/:user_id/payment_requests/:payment_request_id`
+
+<aside class="notice">
+  Only payment requests the authorized user created, the ones of the type `to_user`, can be deleted.
+</aside>
+
+## Delete a Pool invitation
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
+     -X DELETE
+     https://moneypool.mx/api/users/1/liabilities/2
+```
+
+This endpoint allows an authorized user to delete his invitation to a pool that he has not paid yet.
+
+### HTTP Request
+
+`DELETE   https://moneypool.mx/api/users/:user_id/liabilities/:liability_id`
+
+<aside class="notice">
+  This is for pool invitations that are included in the payment requests list, the ones of the type `pool` and that have the `liability_id` attribute.
+</aside>
+
+# Payments
+
+An authorized user can send money to another user using money from his moneypool wallet or using a credit card.
+
+## List Payments
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
+     -X GET
+     https://moneypool.mx/api/users/1/history
+```
+> A JSON with a list of the user's history is returned:
+
+```json
+{
+  "history": [
+    {
+      "outcome": {
+        "amount": "200.00",
+        "created_at": "2015-01-07T00:32:47.390-06:00",
+        "description": "",
+        "type": "wallet_to_pool",
+        "party": "John's Birthday"
+      }
+    },
+    {
+      "income": {
+        "amount": "100.0",
+        "created_at": "2014-12-04T14:45:56.842-06:00",
+        "description": "Pizza and beers",
+        "type": "card_to_wallet",
+        "party": "Alice Smith"
+      }
+    }
+  ]
+}
+```
+
+The history of an authorized user includes payments he has made and receive, specified as outcome or income.
+
+### Attributes
+
+Name | Type | Description
+---- | ---- | -----------
+Amount | string | Amount in MXN pesos as a decimal string.
+Description | string | 
+Type | string | Determines the nature of the payment.
+Party | string | Name of the User or title of Pool the payment was made or received from.
+
+### Type of Payments
+
+#### Incomes
+
+Type | Description
+--- | ---
+card_to_wallet | A **transaction** made from another user's credit card into the authorized user's moneypool wallet.
+user_to_wallet | A **transfer** made from another user's moneypool wallet into the authorized user's moneypool wallet.
+pool_to_wallet | A **transfer** made from a pool's total balance into the authorized user's moneypool wallet.
+
+#### Outcomes
+
+Type | Description
+--- | ---
+card_to_user | A **transaction** made from the authorized user's credit card to another user's moneypool wallet.
+card_to_pool | A **transaction** made from the authorized user's credit card to a pool he was invited to.
+cash_to_pool | A **transaction** made by paying at an OXXO convenience with the authorized user's cash to a pool he was invited to.
+wallet_to_account | A **transfer** made from the authorized user's moneypool wallet to his own bank account through a withdrawal.
+wallet_to_user | A **transfer** made from the authorized user's moneypool wallet to another user's moneypool wallet/
+wallet_to_pool | A **transfer** made from the authorized user's moneypool wallet to a pool he was invited to.
+
+### HTTP Request
+
+`GET https://moneypool.mx/api/users/:user_id/history`
+
 
