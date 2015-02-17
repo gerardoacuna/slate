@@ -28,7 +28,7 @@ curl "https://moneypool.mx/api/"
 
 Every call to the Moneypool api requires an authorization token that identifies a logged in user. 
 
-In the Login section of this documentation is the information on how to login a user and receive it's authorization token.
+In the **Sessions** section of this documentation is the information on how to login a user and receive it's authorization token.
 
 # Versions
 
@@ -72,12 +72,12 @@ This endpoint allows a registered user to login with his moneypool credentials.
 
 `POST https://moneypool.mx/api/sessions`
 
-### Query Parameters
+### Parameters
 
-Parameter | Description
---------- | -----------
-email | User's email
-password | User's password
+Parameter | Type | Description
+--------- | ---- | -----------
+email | string | User's email
+password | string | User's password
 
 <aside class="notice">
 The `auth_token` returned in the response json is the token that need to be sent in the Authorization header of every call.
@@ -114,11 +114,11 @@ This endpoint allows a user to login with facebook authorization.
 
 `POST https://moneypool.mx/api/fb_sessions`
 
-### Query Parameters
+### Parameters
 
-Parameter | Description
---------- | -----------
-oauth_token | Authorization Token returned by Facebook SDK after useing its login button.
+Parameter | Type | Description
+--------- | ---- | -----------
+oauth_token | string | Authorization Token returned by Facebook SDK after useing its login button.
 
 <aside class="notice">
 An existing user will login with this method. A new user can use this method to create an account with a single click.
@@ -175,14 +175,14 @@ This endpoint allows a user to create a moneypool account using his email and pe
 
 `POST https://moneypool.mx/api/fb_sessions`
 
-### Query Parameters
+### Parameters
 
-Parameter |
---------- |
-name |
-email |
-password |
-password_confirmation |
+Parameter | Type |  Description
+--------- | ---- | ------------
+name | string | 
+email | string | Must be a valid email address format.
+password | string | Must be at least 6 digits long.
+password_confirmation | string | It must match the password parameter.
 
 <aside class="notice">
   All parameters are required.
@@ -216,10 +216,6 @@ This endpoint retrieves a specific user's information.
 ### HTTP Request
 
 `GET https://moneypool.mx/api/users/:user_id`
-
-<aside class="notice">
-  A user can only get his own information. The Authorization token sent in the request's headers is used to determine if a user's information can be retrieved or not.
-</aside>
 
 ## Update a User
 
@@ -259,19 +255,19 @@ This endpoint updates a user's information.
 
 `PATCH https://moneypool.mx/api/users/:user_id`
 
-### Query Parameters
+### Parameters
 
 These are the parameters that can be updated with this endpoint. 
 
-Parameter | Validations | Description
---------- | ----------- | ------------
-name | Can't be blank |
-email | Can't be blank. Must be a valid email address format. |
-password | Must be at least 6 digits long. |
-password_confirmation | It must match the password parameter. |
+Parameter | Type | Description
+--------- | ---- | ------------
+name | string | 
+email | string | Must be a valid email address format.
+password | string | Must be at least 6 digits long.
+password_confirmation | It must match the password parameter.
 avatar | |
-clabe | | User's bank account **clabe** number, 18 digit long |
-bank | | The name of the user's bank 
+clabe | string | User's bank account **clabe** number, 18 digit long.
+bank | string | | The name of the user's bank.
 
 <aside class="notice">
  Parameters not sent on the request won't be updated. 
@@ -299,7 +295,7 @@ bank | | The name of the user's bank
 }
 ```
 
-Payment request objects are used to let a friend know that money is owed to the friend that sent the request. As an authorized user, payment requests of type `from_user` mean that the authorized user owes money to another user (**party**). `to_user` payment requests mean that the authorized user sent a payment request to another user and wants to rceived a payment for it.
+Payment request objects are used to let a friend know that money is owed to the friend that sent the request. As an authorized user, payment requests of type `from_user` mean that the authorized user owes money to another user (**party**). `to_user` payment requests mean that the authorized user sent a payment request to another user and wants to received a payment for it.
 
 When listing Payment Requests, pool invitations are included as well (`pool` type).
 ### Attributes
@@ -401,6 +397,15 @@ This endpoint allows an authorized user to send a payment_request to another exi
 ### HTTP Request
 
 `POST https://moneypool.mx/api/users/:user_id/payment_requests`
+
+### Parameters
+
+Parameter | Type | Description
+--------- | ---- | -----------
+user_requested_id | integer | Id of the user from which the payment is being requested.
+amount | string | Amount in MXN pesos that the authorized user is requesting. 
+description | string | A brief description of why a payment is being requested.
+
 
 <aside class="notice">
   All parameters are required.
@@ -510,7 +515,7 @@ curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
 }
 ```
 
-The history of an authorized user includes payments he has made and receive, specified as outcome or income.
+The history of an authorized user includes payments he has made and received, specified as outcome or income.
 
 ### Attributes
 
@@ -546,4 +551,143 @@ wallet_to_pool | A **transfer** made from the authorized user's moneypool wallet
 
 `GET https://moneypool.mx/api/users/:user_id/history`
 
+## Create a Card Payment
 
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
+     -X POST -d '{
+      "payment":{
+        "description":"Dinner",
+        "payment_method":"card",
+        "new_email":"alex@mail.com"},
+      "transaction":{
+        "amount":100.00,
+        "card":"tok_test_visa_4242",
+        "name":"Cecelia Schuster"}
+      }' https://moneypool.mx/api/users/1/mixed_payments
+```
+
+This endpoint creates a payment from the authorized user to another moneypool user or to a pool. This is a credit card transaction. This payment will appear as an outcome in the list of payments.
+
+### HTTP Request
+
+`POST https://moneypool.mx/api/users/:user_id/mixed_payments`
+
+### Parameters
+
+#### Payment
+
+These parameters specify the general information of the payment.
+
+Name | Type | Description
+---- | ---- | -----------
+description | string |
+payment_method | string | The payment method, for this payment the value must be `card`
+new_email | string | The email of the user that will receive the payment. If the email belongs to a person that does not have a moneypool account, one will be created for him.
+pool_id | integer | Id of the pool that the authorized user wants to make a payment to.
+
+#### Transaction
+These parameters specify the information needed to charge a credit card.
+
+Name | Type | Description
+---- | ---- | -----------
+amount | string | A decimal string that specifies the amount in MXN pesos that will be charged to the credit/debit card.
+card | string | The card token. Moneypool can only process a credit/debit card if the card has been previously tokenized by Conekta.
+name | string | Name of the credit/debit cardholder.
+
+<aside class="notice">
+  Payments need to be sent either to a user or to a pool. Only one of the `new_email` and `pool_id` parameters can be present.
+</aside>
+
+## Create a Wallet Payment
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
+     -X POST -d '{
+      "payment":{
+        "wallet_amount":"100.00"
+        "description":"Dinner",
+        "payment_method":"wallet",
+        "new_email":"alex@mail.com"}
+      }' https://moneypool.mx/api/users/1/mixed_payments
+```
+
+This endpoint creates a payment from the authorized user to another moneypool user or a pool. This is a transfer from a moneypool wallet to another. This payment will appear as an outcome in the list of payments.
+
+### HTTP Request
+
+`POST https://moneypool.mx/api/users/:user_id/mixed_payments`
+
+### Parameters
+
+#### Payment
+
+These parameters specify the general information of the payment.
+
+Name | Type | Description
+---- | ---- | -----------
+wallet_amount | string |  A decimal string that specifies the amount in MXN pesos that will be transfered from the authorized user's wallet to the receiver user. This amount can't be greater than the amount available in the user's wallet.
+description | string |
+payment_method | string | The payment method, for this payment the value must be `wallet`
+new_email | string | The email of the user that will receive the payment. If the email belongs to a person that does not have a moneypool account, one will be created for him.
+pool_id | integer | Id of the pool that the authorized user wants to make a payment to.
+
+<aside class="notice">
+  Payments need to be sent either to a user or to a pool. Only one of the `new_email` and `pool_id` parameters can be present.
+</aside>
+
+## Create a Mixed Payment
+
+```shell
+curl -H "Accept: application/vnd.moneypool.mx+json; version=1" \
+     -H "Content-type: application/json" \
+     -H "Authorization: Token token=fe70b88622cdc3972513e4d1f10c0b7e" \
+     -X POST -d '{
+      "payment":{
+        "wallet_amount":"100.00"
+        "description":"Dinner",
+        "payment_method":"card",
+        "new_email":"alex@mail.com"},
+      "transaction":{
+        "amount":100.00,
+        "card":"tok_test_visa_4242",
+        "name":"Cecelia Schuster"}
+      }' https://moneypool.mx/api/users/1/mixed_payments
+```
+
+This endpoint creates a mixed payment from the authorized user to another moneypool user or a pool. It is used to create a credit/debit card transaction and a wallet transfer at the same time. This payment will appear as two outcome items in the list of payments, one for the credit/debit card transaction and another for the wallet transfer.
+
+### HTTP Request
+
+`POST https://moneypool.mx/api/users/:user_id/mixed_payments`
+
+### Parameters
+
+#### Payment
+
+These parameters specify the general information of the payment.
+
+Name | Type | Description
+---- | ---- | -----------
+wallet_amount | string |  A decimal string that specifies the amount in MXN pesos that will be transfered from the authorized user's wallet.
+description | string |
+payment_method | string | The payment method, for this payment the value must be `mixed`
+new_email | string | The email of the user that will receive the payment. If the email belongs to a person that does not have a moneypool account, one will be created for him.
+pool_id | integer | Id of the pool that the authorized user wants to make a payment to.
+
+#### Transaction
+These parameters specify the information needed to charge a credit card.
+
+Name | Type | Description
+---- | ---- | -----------
+amount | string | A decimal string that specifies the amount in MXN pesos that will be charged to the credit/debit card.
+card | string | The card token. Moneypool can only process a credit/debit card if the card has been previously tokenized by Conekta.
+name | string | Name of the credit/debit cardholder.
+
+<aside class="notice">
+  Payments need to be sent either to a user or to a pool. Only one of the `new_email` and `pool_id` parameters can be present.
+</aside>
